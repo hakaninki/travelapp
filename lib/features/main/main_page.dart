@@ -1,0 +1,47 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:travel_app/features/home/home_page.dart';
+import 'package:travel_app/features/post/presentation/pages/add_post_page.dart';
+import 'package:travel_app/features/main/providers/nav_provider.dart';
+
+class MainPage extends ConsumerWidget {
+  const MainPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final index = ref.watch(navIndexProvider);
+    final pages = const [
+      HomePage(),
+      PlaceholderPage(title: 'Favorites'),
+      AddPostPage(),
+      PlaceholderPage(title: 'Map'),
+      PlaceholderPage(title: 'Profile'),
+    ];
+
+    return Scaffold(
+      body: IndexedStack(index: index, children: pages),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: index,
+        onTap: (i) => ref.read(navIndexProvider.notifier).state = i,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.brown[800],
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.travel_explore), label: 'Explore'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_rounded), label: 'Post'),
+          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: 'Map'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+// sende zaten vardı:
+class PlaceholderPage extends StatelessWidget {
+  final String title;
+  const PlaceholderPage({required this.title, super.key});
+  @override
+  Widget build(BuildContext context) => Center(child: Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)));
+}
