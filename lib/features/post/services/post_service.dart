@@ -1,14 +1,19 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:travel_app/core/constants/app_collection.dart';
 import 'package:travel_app/core/models/post_model.dart';
 import 'package:travel_app/features/post/services/cloudinary_service.dart';
 
 class PostService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  FirebaseFirestore get firestore => _firestore; // controller kullanıyor
   final CloudinaryService _cloudinary;
+
   PostService(this._cloudinary);
 
+  DocumentReference<Map<String, dynamic>> _postRef(String postId) =>
+      _firestore.collection(AppCollections.posts).doc(postId);
+
+  /// Yeni post oluştur
   Future<void> createPost({
     required File imageFile,
     required String uid,
@@ -16,11 +21,9 @@ class PostService {
     required String description,
     required String location,
   }) async {
-    // 1) Görseli Cloudinary'e yükle
     final imageUrl = await _cloudinary.uploadImage(imageFile);
+    final docRef = _firestore.collection(AppCollections.posts).doc();
 
-    // 2) Firestore'a yaz (koleksiyon yoksa otomatik oluşur)
-    final docRef = _firestore.collection('posts').doc();
     final post = PostModel(
       id: docRef.id,
       uid: uid,
@@ -35,17 +38,30 @@ class PostService {
       ...post.toMap(),
       'createdAt': FieldValue.serverTimestamp(),
     });
-    print('✅ Firestore write done: posts/${docRef.id}');
   }
 
+  /// Post feed akışı (tüm kullanıcılar)
   Stream<List<PostModel>> watchPosts() {
     return _firestore
-        .collection('posts')
+        .collection(AppCollections.posts)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map((d) {
-              final data = d.data();
-              return PostModel.fromMap({...data, 'id': data['id'] ?? d.id});
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return PostModel.fromMap({...data, 'id': doc.id});
+            }).toList());
+  }
+
+  /// Belirli kullanıcının postları
+  Stream<List<PostModel>> watchPostsByUser(String uid) {
+    return _firestore
+        .collection(AppCollections.posts)
+        .where('uid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return PostModel.fromMap({...data, 'id': doc.id});
             }).toList());
   }
 }

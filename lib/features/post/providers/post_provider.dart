@@ -1,28 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:travel_app/core/models/post_model.dart';
+import 'package:travel_app/core/constants/app_config.dart';
 import 'package:travel_app/features/post/services/cloudinary_service.dart';
 import 'package:travel_app/features/post/services/post_service.dart';
-import 'package:travel_app/features/post/application/add_post_controller.dart';
-import 'package:travel_app/features/post/application/add_post_state.dart';
+import 'package:travel_app/features/post/services/like_service.dart';
+import 'package:travel_app/features/post/services/comment_service.dart';
 
+/// Config
+final appConfigProvider = Provider<AppConfig>((ref) => const AppConfig());
+
+/// Cloudinary
 final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) {
+  final cfg = ref.watch(appConfigProvider);
   return CloudinaryService(
-    cloudName: 'dt3ojv1nj',          // <— senin cloud name
-    uploadPreset: 'unsigned_preset', // <— preset adı
+    cloudName: cfg.cloudName,
+    uploadPreset: cfg.uploadPreset,
   );
 });
 
+/// Services
 final postServiceProvider = Provider<PostService>((ref) {
-  final cloud = ref.read(cloudinaryServiceProvider);
+  final cloud = ref.watch(cloudinaryServiceProvider);
   return PostService(cloud);
 });
-
-final postsStreamProvider = StreamProvider<List<PostModel>>((ref) {
-  return ref.read(postServiceProvider).watchPosts();
-});
-final postProvider = postsStreamProvider;
-
-final addPostControllerProvider =
-    StateNotifierProvider<AddPostController, AddPostState>(
-  (ref) => AddPostController(ref),
-);
+final likeServiceProvider = Provider<LikeService>((ref) => LikeService());
+final commentServiceProvider = Provider<CommentService>((ref) => CommentService());

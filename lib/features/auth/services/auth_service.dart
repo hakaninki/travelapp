@@ -39,8 +39,9 @@ class AuthService {
       'email': email.trim(),
       'username': uname,        // orijinal yazım
       'username_lc': unameLc,   // normalize alan (lookup bununla yapılır)
+      'photoUrl': user.photoURL,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
 
     return user;
   }

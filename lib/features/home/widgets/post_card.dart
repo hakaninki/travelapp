@@ -25,10 +25,10 @@ class PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 👤 Kullanıcı bilgisi (avatar opsiyonel)
+              // 👤 Kullanıcı bilgisi (Riverpod ile)
               UserInfoRow(
-                username: post.username,
-                userImageUrl: null, // şimdilik yok; ileride ekleriz
+                uid: post.uid,
+                fallbackUsername: post.username,
               ),
 
               const SizedBox(height: 5),
@@ -38,21 +38,22 @@ class PostCard extends StatelessWidget {
 
               const SizedBox(height: 5),
 
-              // 🖼 Görsel (Network)
+              // 🖼 Görsel
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.zero),
                 child: Image.network(
                   post.imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  // istersen sabit yükseklik: height: 240,
                   loadingBuilder: (c, w, progress) =>
-                      progress == null ? w : const AspectRatio(
-                        aspectRatio: 4/3,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                      progress == null
+                          ? w
+                          : const AspectRatio(
+                              aspectRatio: 4 / 3,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
                   errorBuilder: (c, e, s) => const AspectRatio(
-                    aspectRatio: 4/3,
+                    aspectRatio: 4 / 3,
                     child: Center(child: Icon(Icons.broken_image)),
                   ),
                 ),
@@ -66,7 +67,9 @@ class PostCard extends StatelessWidget {
               const SizedBox(height: 10),
 
               // ❤️💬 Etkileşim ikonları
-              const PostActionsInfo(),
+              PostActionsInfo(
+                postId: post.id,
+              ),
             ],
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_app/features/home/home_page.dart';
 import 'package:travel_app/features/post/presentation/pages/add_post_page.dart';
 import 'package:travel_app/features/main/providers/nav_provider.dart';
+import 'package:travel_app/features/profile/pages/profile_page.dart';
 
 class MainPage extends ConsumerWidget {
   const MainPage({super.key});
@@ -15,7 +16,7 @@ class MainPage extends ConsumerWidget {
       PlaceholderPage(title: 'Favorites'),
       AddPostPage(),
       PlaceholderPage(title: 'Map'),
-      PlaceholderPage(title: 'Profile'),
+      ProfilePage(),
     ];
 
     return Scaffold(
@@ -38,7 +39,7 @@ class MainPage extends ConsumerWidget {
   }
 }
 
-// sende zaten vardı:
+
 class PlaceholderPage extends StatelessWidget {
   final String title;
   const PlaceholderPage({required this.title, super.key});

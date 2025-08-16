@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_app/features/home/widgets/home_sliver_appbar.dart';
 import 'package:travel_app/features/home/widgets/home_sliver_list.dart';
-import 'package:travel_app/features/post/providers/post_provider.dart';
+//import 'package:travel_app/features/post/providers/post_provider.dart';
+import 'package:travel_app/features/post/providers/post_stream_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -14,7 +15,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
-    final postsAsync = ref.watch(postProvider); // AsyncValue<List<PostModel>>
+    final postsAsync = ref.watch(postsStreamProvider); // AsyncValue<List<PostModel>>
 
     return Scaffold(
       body: CustomScrollView(
