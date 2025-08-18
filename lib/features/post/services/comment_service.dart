@@ -11,8 +11,8 @@ class CommentService {
   CollectionReference<Map<String, dynamic>> _commentsCol(String postId) =>
       _postRef(postId).collection(AppCollections.comments);
 
-  /// Yorum ekle (post dokümanına dokunmuyoruz)
-  Future<void> addComment({
+  /// Yorum ekle -> oluşturulan commentId'yi döndür
+  Future<String> addComment({
     required String postId,
     required String userId,
     required String username,
@@ -20,16 +20,22 @@ class CommentService {
     required String text,
   }) async {
     final docRef = _commentsCol(postId).doc();
-    await docRef.set({
+
+    // RULES ile uyumlu minimal alanlar + opsiyoneller
+    final data = <String, dynamic>{
       'userId': userId,
       'username': username,
       if (photoUrl != null && photoUrl.isNotEmpty) 'photoUrl': photoUrl,
-      'text': text.trim(),
+      'text': text, // Controller zaten trim ve length kontrolünü yaptı
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    };
+
+    print('DEBUG addComment data=$data');
+
+    await docRef.set(data);
+    return docRef.id;
   }
 
-  /// Yorum stream
   Stream<List<CommentModel>> watchComments(String postId) {
     return _commentsCol(postId)
         .orderBy('createdAt', descending: true)
@@ -38,7 +44,6 @@ class CommentService {
             snap.docs.map((d) => CommentModel.fromFirestore(d.id, d.data())).toList());
   }
 
-  /// Yorum sil (post dokümanına dokunmuyoruz)
   Future<void> deleteComment({
     required String postId,
     required String commentId,

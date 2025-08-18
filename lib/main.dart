@@ -9,10 +9,14 @@ import 'firebase_options.dart';
 import 'features/main/main_page.dart';
 import 'features/profile/pages/profile_page.dart';
 import 'features/auth/presentation/pages/auth_gate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+ print('FIREBASE PROJECT = ${FirebaseFirestore.instance.app.options.projectId}');
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

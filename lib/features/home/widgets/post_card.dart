@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:travel_app/features/home/widgets/post_card_components/location_info.dart';
 import 'package:travel_app/features/home/widgets/post_card_components/post_actions_info.dart';
@@ -25,34 +26,32 @@ class PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 👤 Kullanıcı bilgisi (Riverpod ile)
+              // 👤 Kullanıcı
               UserInfoRow(
                 uid: post.uid,
                 fallbackUsername: post.username,
               ),
-
               const SizedBox(height: 5),
 
               // 📍 Konum
               LocationInfoRow(location: post.location),
-
               const SizedBox(height: 5),
 
-              // 🖼 Görsel
+              // 🖼 Görsel (cached + skeleton)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.zero),
-                child: Image.network(
-                  post.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: post.imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  loadingBuilder: (c, w, progress) =>
-                      progress == null
-                          ? w
-                          : const AspectRatio(
-                              aspectRatio: 4 / 3,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                  errorBuilder: (c, e, s) => const AspectRatio(
+                  placeholder: (context, url) => const AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: Color(0xFFEFEFEF)),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => const AspectRatio(
                     aspectRatio: 4 / 3,
                     child: Center(child: Icon(Icons.broken_image)),
                   ),
@@ -63,13 +62,10 @@ class PostCard extends StatelessWidget {
 
               // ✍️ Açıklama
               PostDescription(description: post.description),
-
               const SizedBox(height: 10),
 
               // ❤️💬 Etkileşim ikonları
-              PostActionsInfo(
-                postId: post.id,
-              ),
+              PostActionsInfo(postId: post.id),
             ],
           ),
         ),

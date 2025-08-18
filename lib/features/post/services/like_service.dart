@@ -10,8 +10,8 @@ class LikeService {
   CollectionReference<Map<String, dynamic>> _likesCol(String postId) =>
       _postRef(postId).collection(AppCollections.likes);
 
-  /// Like/Unlike (post dokümanını güncellemiyoruz)
-  Future<void> toggleLike({
+  /// Like/Unlike -> true dönerse LIKE yapıldı, false dönerse UNLIKE yapıldı.
+  Future<bool> toggleLike({
     required String postId,
     required String userId,
   }) async {
@@ -20,20 +20,20 @@ class LikeService {
 
     if (snap.exists) {
       await likeDoc.delete(); // unlike
+      return false;
     } else {
       await likeDoc.set({
         'userId': userId,
         'createdAt': FieldValue.serverTimestamp(),
       }); // like
+      return true;
     }
   }
 
-  /// Like sayısı: alt koleksiyon boyutu
   Stream<int> likeCountStream(String postId) {
     return _likesCol(postId).snapshots().map((s) => s.size);
   }
 
-  /// Bu kullanıcı beğenmiş mi?
   Stream<bool> isLikedByUserStream({
     required String postId,
     required String userId,
@@ -41,7 +41,6 @@ class LikeService {
     return _likesCol(postId).doc(userId).snapshots().map((s) => s.exists);
   }
 
-  /// Liker ID listesi
   Future<List<String>> getLikerIds({
     required String postId,
     int limit = 30,

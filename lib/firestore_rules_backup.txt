@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============= USERS =============
+    match /users/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // followers
+      match /followers/{followerUid} {
+        allow read: if true;
+        allow create, delete: if request.auth != null
+          && request.auth.uid == followerUid;
+        allow update: if false;
+      }
+
+      // following
+      match /following/{followingUid} {
+        allow read: if true;
+        allow create, delete: if request.auth != null
+          && request.auth.uid == uid;
+        allow update: if false;
+      }
+    }
+
+    // ============= POSTS =============
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+
+      // Sadece commentCount alanı değişiyorsa herkes; aksi halde sadece post sahibi
+      allow update: if request.auth != null && (
+        (
+          request.resource.data.diff(resource.data).changedKeys().hasOnly(['commentCount'])
+          && request.resource.data.get('commentCount') is int
+        )
+        || (request.auth.uid == resource.data.uid)
+      );
+
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.uid;
+
+      // --- LIKES ---
+      match /likes/{userId} {
+        allow read: if true;
+        allow create, delete: if request.auth != null
+          && request.auth.uid == userId;
+        allow update: if false;
+      }
+
+      // --- COMMENTS ---
+      match /comments/{commentId} {
+        allow read: if true;
+
+        // Yorum ekleme: sadece giriş yapmış ve userId'si kendisi olan
+        allow create: if request.auth != null
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+
+        // Yorum silme: sadece yorumu yazan
+        allow delete: if request.auth != null
+          && resource.data.userId == request.auth.uid;
+
+        allow update: if false;
+      }
+    }
+
+    // ============= NOTIFICATIONS =============
+    // notifications/{userId} altında sadece sahibi okur
+    match /notifications/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      match /items/{notifId} {
+        // Bildirimi sadece OLUŞTURAN kullanıcı yazabilir
+        allow create: if request.auth != null
+          && request.resource.data.fromUid == request.auth.uid;
+
+        // Okundu işaretleme: sadece SAHİBİ 'read' alanını güncelleyebilir
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['read'])
+          && request.resource.data.read is bool;
+
+        // Okuma tekrar: sadece sahibi
+        allow read: if request.auth != null && request.auth.uid == userId;
+
+        allow delete: if false;
+      }
+    }
+  }
+}

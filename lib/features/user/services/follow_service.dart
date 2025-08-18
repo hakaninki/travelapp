@@ -17,6 +17,9 @@ class FollowService {
   CollectionReference<Map<String, dynamic>> _followingCol(String uid) =>
       _userDoc(uid).collection(_following);
 
+  CollectionReference<Map<String, dynamic>> _notifItemsCol(String uid) =>
+      _db.collection('notifications').doc(uid).collection('items');
+
   /// currentUid -> targetUid takip et
   Future<void> follow({
     required String currentUid,
@@ -31,6 +34,30 @@ class FollowService {
       tx.set(followingRef, {'createdAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
       tx.set(followersRef, {'createdAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
     });
+
+    // Bildirim: targetUid'e yaz (client-side)
+    try {
+      // Opsiyonel: fromUsername çek
+      String? fromUsername;
+      String? fromPhotoUrl;
+      final fromUserDoc = await _userDoc(currentUid).get();
+      if (fromUserDoc.exists) {
+        final d = fromUserDoc.data()!;
+        fromUsername = d['username'] as String?;
+        fromPhotoUrl = d['photoUrl'] as String?;
+      }
+
+      await _notifItemsCol(targetUid).add({
+        'type': 'follow',
+        'fromUid': currentUid,
+        if (fromUsername != null) 'fromUsername': fromUsername,
+        if (fromPhotoUrl != null) 'fromPhotoUrl': fromPhotoUrl,
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Bildirim yazılamasa da follow başarılı; hatayı yutuyoruz.
+    }
   }
 
   /// currentUid -> targetUid takibi bırak
@@ -47,16 +74,15 @@ class FollowService {
       tx.delete(followingRef);
       tx.delete(followersRef);
     });
+    // Unfollow için bildirim YOK
   }
 
-  /// currentUid, targetUid'i takip ediyor mu?
   Stream<bool> isFollowingStream({
     required String currentUid,
     required String targetUid,
   }) {
     if (currentUid == targetUid) {
-      // Kendini her zaman 'following' kabul etmeye gerek yok; false döndürelim.
-      return  Stream<bool>.value(false);
+      return Stream<bool>.value(false);
     }
     return _followingCol(currentUid)
         .doc(targetUid)
@@ -64,12 +90,10 @@ class FollowService {
         .map((d) => d.exists);
   }
 
-  /// Takipçi sayısı (targetUid'i takip edenler)
   Stream<int> followersCountStream(String targetUid) {
     return _followersCol(targetUid).snapshots().map((s) => s.size);
   }
 
-  /// Takip edilen sayısı (currentUid'in takip ettikleri)
   Stream<int> followingCountStream(String currentUid) {
     return _followingCol(currentUid).snapshots().map((s) => s.size);
   }
