@@ -22,16 +22,42 @@ class NotificationsService {
         .map((snap) => snap.docs.map(AppNotification.fromDoc).toList());
   }
 
+  /// 🔹 Unread count (read == false) canlı sayım
+  Stream<int> unreadCountStream() {
+    final uid = _uid;
+    if (uid == null) return const Stream<int>.empty();
+    final col = _db.collection('notifications').doc(uid).collection('items');
+    return col.where('read', isEqualTo: false).snapshots().map((s) => s.size);
+  }
+
   Future<void> markAsRead(String notifId) async {
     final uid = _uid;
     if (uid == null) return;
 
     final ref =
         _db.collection('notifications').doc(uid).collection('items').doc(notifId);
-
     await ref.update({'read': true});
     // ignore: avoid_print
     print('DEBUG notif: markAsRead uid=$uid notifId=$notifId');
+  }
+
+  /// 🔹 Tüm unread kayıtları okundu işaretle (batch)
+  Future<int> markAllAsRead() async {
+    final uid = _uid;
+    if (uid == null) return 0;
+
+    final col = _db.collection('notifications').doc(uid).collection('items');
+    final snap = await col.where('read', isEqualTo: false).limit(500).get(); // güvenli limit
+    if (snap.docs.isEmpty) return 0;
+
+    final batch = _db.batch();
+    for (final d in snap.docs) {
+      batch.update(d.reference, {'read': true});
+    }
+    await batch.commit();
+    // ignore: avoid_print
+    print('DEBUG notif: markAllAsRead uid=$uid count=${snap.size}');
+    return snap.size;
   }
 
   // -------------------- CREATE HELPERS --------------------
@@ -87,7 +113,7 @@ class NotificationsService {
       return;
     }
 
-    // Yorum metnini (varsa) çek → payload'a kısa önizleme ekle
+    // yorum önizleme (opsiyonel)
     String? commentText;
     if (commentId != null && commentId.isNotEmpty) {
       try {
@@ -104,7 +130,7 @@ class NotificationsService {
         }
       } catch (e) {
         // ignore: avoid_print
-        print('DEBUG notif.comment: failed to fetch comment text: $e');
+        print('DEBUG notif.comment: fetch comment text failed: $e');
       }
     }
 

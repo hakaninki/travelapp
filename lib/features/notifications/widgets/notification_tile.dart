@@ -29,7 +29,7 @@ class NotificationTile extends StatelessWidget {
     }
 
     return ListTile(
-      leading: Icon(icon, color: Colors.brown[700]),
+      leading: Icon(icon, color: Colors.red[200]),
       title: Text(
         title,
         style: TextStyle(
@@ -39,7 +39,7 @@ class NotificationTile extends StatelessWidget {
       subtitle: _buildSubtitle(),
       trailing: notif.read
           ? null
-          : const CircleAvatar(radius: 5, backgroundColor: Colors.redAccent),
+          : const CircleAvatar(radius: 5, backgroundColor: Colors.green),
       onTap: onTap,
     );
   }
