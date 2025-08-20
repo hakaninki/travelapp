@@ -7,6 +7,7 @@ import 'package:travel_app/features/main/providers/nav_provider.dart';
 import 'package:travel_app/features/profile/pages/profile_page.dart';
 import 'package:travel_app/features/notifications/pages/notifications_page.dart';
 import 'package:travel_app/features/notifications/providers/notifications_provider.dart';
+import 'package:travel_app/features/map/map_page.dart';
 
 class MainPage extends ConsumerWidget {
   const MainPage({super.key});
@@ -23,7 +24,7 @@ class MainPage extends ConsumerWidget {
       HomePage(),
       NotificationsPage(),
       AddPostPage(),
-      PlaceholderPage(title: 'Map'),
+      MapPage(),
       ProfilePage(),
     ];
 

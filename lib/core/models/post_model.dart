@@ -9,6 +9,10 @@ class PostModel {
   final String location;
   final DateTime createdAt;
 
+  /// ✅ yeni alanlar
+  final double? lat;
+  final double? lng;
+
   PostModel({
     required this.id,
     required this.uid,
@@ -17,6 +21,8 @@ class PostModel {
     required this.imageUrl,
     required this.location,
     required this.createdAt,
+    this.lat,
+    this.lng,
   });
 
   Map<String, dynamic> toMap() => {
@@ -27,6 +33,8 @@ class PostModel {
         'imageUrl': imageUrl,
         'location': location,
         'createdAt': createdAt,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
       };
 
   factory PostModel.fromMap(Map<String, dynamic> m) {
@@ -37,7 +45,6 @@ class PostModel {
     } else if (raw is DateTime) {
       created = raw;
     } else if (raw is int) {
-      // ms since epoch gelirse
       created = DateTime.fromMillisecondsSinceEpoch(raw);
     } else {
       created = DateTime.now();
@@ -51,6 +58,8 @@ class PostModel {
       imageUrl: m['imageUrl'] as String,
       location: m['location'] as String,
       createdAt: created,
+      lat: (m['lat'] is num) ? (m['lat'] as num).toDouble() : null,
+      lng: (m['lng'] is num) ? (m['lng'] as num).toDouble() : null,
     );
   }
 }

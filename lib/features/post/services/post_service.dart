@@ -20,6 +20,10 @@ class PostService {
     required String username,
     required String description,
     required String location,
+
+    /// ✅ yeni parametreler
+    double? lat,
+    double? lng,
   }) async {
     final imageUrl = await _cloudinary.uploadImage(imageFile);
     final docRef = _firestore.collection(AppCollections.posts).doc();
@@ -32,6 +36,8 @@ class PostService {
       imageUrl: imageUrl,
       location: location,
       createdAt: DateTime.now(),
+      lat: lat,
+      lng: lng,
     );
 
     await docRef.set({

@@ -80,6 +80,10 @@ class AddPostPage extends ConsumerWidget {
             initial: st.location,
             onChanged: (v) =>
                 ref.read(addPostControllerProvider.notifier).setLocation(v),
+            onPlaceSelected: ({required String label, double? lat, double? lng}) {
+              ref.read(addPostControllerProvider.notifier).setLocation(label);
+              ref.read(addPostControllerProvider.notifier).setLatLng(lat, lng);
+            },
           ),
           const SizedBox(height: 24),
           if (st.isLoading) const Center(child: CircularProgressIndicator()),
