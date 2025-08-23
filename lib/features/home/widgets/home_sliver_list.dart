@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app/core/models/post_model.dart';
-import 'package:travel_app/features/home/widgets/post_card.dart';
+import 'package:travel_app/features/home/widgets/tappable_post_card.dart';
 
 class HomeSliverList extends StatelessWidget {
   final List<PostModel> posts;
@@ -43,7 +43,7 @@ class HomeSliverList extends StatelessWidget {
           final post = posts[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 20),
-            child: PostCard(post: post),
+            child: TappablePostCard(post: post),
           );
         },
         childCount: posts.length + 1, // +1 footer

@@ -7,6 +7,7 @@ import 'package:travel_app/features/user/application/follow_controller.dart';
 import 'package:travel_app/features/user/widgets/follow_button.dart';
 import 'package:travel_app/features/user/pages/followers_page.dart';
 import 'package:travel_app/features/user/pages/following_page.dart';
+import 'package:travel_app/features/chat/pages/chat_page.dart';
 
 class ProfileHeader extends ConsumerWidget {
   final UserModel user;
@@ -35,7 +36,7 @@ class ProfileHeader extends ConsumerWidget {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 loading: () => const SizedBox(
-                  width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                 error: (_, __) => const Text('0',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               ),
@@ -69,11 +70,14 @@ class ProfileHeader extends ConsumerWidget {
                 Text(
                   user.username ?? 'user_${user.id.substring(0, 6)}',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   user.bio?.trim().isNotEmpty == true ? user.bio!.trim() : 'No bio yet',
                   style: const TextStyle(color: Colors.black54),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 10),
 
@@ -107,7 +111,28 @@ class ProfileHeader extends ConsumerWidget {
 
                 if (!isOwnProfile) ...[
                   const SizedBox(height: 10),
-                  FollowButton(targetUid: user.id),
+                  Row(
+                    children: [
+                      // Follow button (existing)
+                      FollowButton(targetUid: user.id),
+                      const SizedBox(width: 8),
+                      // Message button next to Follow
+                      SizedBox(
+                        height: 36,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                          label: const Text('Message'),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ChatPage(otherUid: user.id),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ],
             ),

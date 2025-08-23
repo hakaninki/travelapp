@@ -27,9 +27,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       //initialRoute: '/SplashPage', // veya SplashPage varsa orası
-      home: const AuthGate(),
+      home: const SplashPage(),
       routes: {
-        '/splash': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignUpPage(),
         '/main': (context) => const MainPage(),

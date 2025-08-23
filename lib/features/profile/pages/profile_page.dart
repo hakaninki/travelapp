@@ -57,8 +57,27 @@ class ProfilePage extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(child: ProfileHeader(user: user)),
+
+              // ✅ spacing + divider
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 8, 5, 8),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 6),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.black,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Grid tarafına da hafif extra top padding
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 sliver: ProfilePostGrid(userId: targetUid),
               ),
             ],

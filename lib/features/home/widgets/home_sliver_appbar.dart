@@ -1,67 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:travel_app/features/home/widgets/search_bar.dart';
-import 'package:travel_app/features/user/pages/user_search_page.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeSliverAppBar extends StatelessWidget {
+import 'package:travel_app/features/home/widgets/search_bar.dart';
+import 'package:travel_app/features/chat/pages/chat_list_page.dart';
+import 'package:travel_app/features/chat/providers/chat_providers.dart';
+
+class HomeSliverAppBar extends ConsumerWidget {
   const HomeSliverAppBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadAsync = ref.watch(unreadTotalProvider);
+    final unread = unreadAsync.maybeWhen(data: (v) => v, orElse: () => 0);
+
     return SliverAppBar(
       backgroundColor: Colors.white,
-      expandedHeight: 250,
-      floating: true, // Scroll edince hemen aşağıdan title görünür
-      snap: true,     // Yukarı çıkarken title hızlıca görünür
-      pinned: true,   // Üst bar scroll ile sabit kalsın
+      expandedHeight: 120, // arka plan görseli sadece appbar alanında
+      floating: true,
+      snap: true,
+      pinned: true,
+      centerTitle: false,
+      titleSpacing: 12,
       flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          children: [
-            Image.asset(
-              "images/splash5.png",
-              fit: BoxFit.cover,
-              width: double.infinity,
-            ),
-            Positioned(
-              bottom: 30,
-              left: 20,
-              right: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "EUNOWA",
-                    style: TextStyle(
-                      fontSize: 40,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Places live through stories",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  // Bu bar zaten UserSearchPage'i açıyor
-                  ExploreBar(),
-                ],
-              ),
-            ),
-          ],
+        background: Image.asset(
+          "images/splash5.png",
+          fit: BoxFit.cover,
+          width: double.infinity,
         ),
       ),
-      title: const Text("EUNOWA", style: TextStyle(color: Colors.black)),
+      // Solda EUNOWA, ortada kompakt arama
+      title: Row(
+        children: const [
+          Text("EUNOWA", style: TextStyle(color: Colors.black)),
+          SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: 36,
+              child: ExploreBarCompact(),
+            ),
+          ),
+        ],
+      ),
+      // Sağda mesajlar ikonu + unread rozeti
       actions: [
-        IconButton(
-          icon: const Icon(Icons.search, color: Colors.black),
-          onPressed: () {
-            // 🔎 Aynı kullanıcı arama sayfasını aç
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const UserSearchPage()),
-            );
-          },
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Badge( // Flutter 3.7+; daha eski sürümde Stack ile mini rozet yapabilirsiniz.
+            isLabelVisible: unread > 0,
+            label: Text('$unread'),
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              elevation: 2,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ChatListPage()),
+                  );
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    CupertinoIcons.chat_bubble_2_fill,
+                    size: 22,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
