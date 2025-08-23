@@ -20,8 +20,6 @@ class PostService {
     required String username,
     required String description,
     required String location,
-
-    /// ✅ yeni parametreler
     double? lat,
     double? lng,
   }) async {
@@ -44,6 +42,32 @@ class PostService {
       ...post.toMap(),
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Post güncelle (yalnızca açıklama/konum/lat/lng)
+  Future<void> updatePost({
+    required String postId,
+    String? description,
+    String? location,
+    double? lat,
+    double? lng,
+  }) async {
+    final Map<String, dynamic> data = {
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (description != null) data['description'] = description;
+    if (location != null) data['location'] = location;
+    if (lat != null) data['lat'] = lat;
+    if (lng != null) data['lng'] = lng;
+
+    if (data.length == 1) return; // sadece updatedAt var -> değişiklik yok
+    await _postRef(postId).update(data);
+  }
+
+  /// Post sil
+  Future<void> deletePost(String postId) async {
+    // Not: Alt koleksiyonlar otomatik silinmez (comments/likes). Backlog: recursive delete.
+    await _postRef(postId).delete();
   }
 
   /// Post feed akışı (tüm kullanıcılar)
@@ -70,4 +94,18 @@ class PostService {
               return PostModel.fromMap({...data, 'id': doc.id});
             }).toList());
   }
+
+    /// Belirli konum label'ına göre postlar
+  Stream<List<PostModel>> watchPostsByLocationLabel(String locationLabel) {
+    return _firestore
+        .collection(AppCollections.posts)
+        .where('location', isEqualTo: locationLabel)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return PostModel.fromMap({...data, 'id': doc.id});
+            }).toList());
+  }
+
 }

@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:travel_app/core/models/post_model.dart';
 import 'package:travel_app/features/post/providers/post_provider.dart';
+import 'package:travel_app/features/map/widgets/map_post_marker.dart';
+import 'package:travel_app/features/map/pages/location_posts_page.dart';
 
 /// Tüm postları izleyip map'e vereceğiz
 final mapPostsProvider = StreamProvider<List<PostModel>>((ref) {
@@ -30,7 +32,21 @@ class MapPage extends ConsumerWidget {
                   point: LatLng(p.lat!, p.lng!),
                   width: 40,
                   height: 40,
-                  child: const Icon(Icons.location_on, size: 40, color: Colors.red),
+                  child: MapPostMarker(
+                    onTap: () {
+                      final label = p.location;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => LocationPostsPage(
+                            locationLabel: label,
+                            lat: p.lat,
+                            lng: p.lng,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               )
               .toList();

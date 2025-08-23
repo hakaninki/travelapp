@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:travel_app/core/models/post_model.dart';
 import 'package:travel_app/features/post/application/add_post_state.dart';
 import 'package:travel_app/features/post/presentation/widgets/image_picker_field.dart';
 import 'package:travel_app/features/post/presentation/widgets/description_field.dart';
@@ -10,8 +11,37 @@ import 'package:travel_app/features/post/presentation/widgets/location_field.dar
 import 'package:travel_app/features/main/providers/nav_provider.dart';
 import 'package:travel_app/features/post/application/add_post_controller.dart';
 
-class AddPostPage extends ConsumerWidget {
-  const AddPostPage({super.key});
+class AddPostPage extends ConsumerStatefulWidget {
+  final PostModel? initialPost;
+  const AddPostPage({super.key, this.initialPost});
+
+  @override
+  ConsumerState<AddPostPage> createState() => _AddPostPageState();
+}
+
+class _AddPostPageState extends ConsumerState<AddPostPage> {
+  bool _hydrated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🔧 Provider'ı lifecycle içinde DEĞİL, first frame'den sonra değiştir.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final p = widget.initialPost;
+      if (p != null && !_hydrated) {
+        ref.read(addPostControllerProvider.notifier).hydrateFrom(p);
+        setState(() => _hydrated = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Form state bulaşmasın
+    ref.read(addPostControllerProvider.notifier).reset();
+    super.dispose();
+  }
 
   Future<void> _pick(WidgetRef ref) async {
     final picked = await ImagePicker().pickImage(
@@ -24,17 +54,24 @@ class AddPostPage extends ConsumerWidget {
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
-    final ok = await ref.read(addPostControllerProvider.notifier).submit();
-    final st = ref.read(addPostControllerProvider);
+    final controller = ref.read(addPostControllerProvider.notifier);
+    final ok = widget.initialPost == null
+        ? await controller.submit()
+        : await controller.submitEdit(widget.initialPost!);
 
-    // BuildContext.mounted bazı sürümlerde olmayabilir; güvenli davranalım.
-    if (!Navigator.of(context).mounted) return;
+    final st = ref.read(addPostControllerProvider);
+    if (!mounted) return;
 
     if (ok) {
-      // Home tab'a geç
-      ref.read(navIndexProvider.notifier).state = 0;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Posted ✅')));
+      if (widget.initialPost == null) {
+        ref.read(navIndexProvider.notifier).state = 0;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Posted ✅')));
+      } else {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Post updated ✅')));
+      }
     } else if (st.error != null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(st.error!)));
@@ -42,34 +79,39 @@ class AddPostPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AddPostState st = ref.watch(addPostControllerProvider);
 
+    final isEdit = widget.initialPost != null;
     final canPublish = !st.isLoading &&
-        st.image != null &&
-        st.description.trim().isNotEmpty;
+        (isEdit
+            ? st.description.trim().isNotEmpty
+            : (st.image != null && st.description.trim().isNotEmpty));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Post'),
+        title: Text(isEdit ? 'Edit Post' : 'New Post'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
           TextButton(
             onPressed: canPublish ? () => _submit(context, ref) : null,
-            child: const Text('Publish', style: TextStyle(color: Colors.white)),
+            child: Text(isEdit ? 'Save' : 'Publish',
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          ImagePickerField(
-            image: st.image,
-            onPick: () => _pick(ref),
-            onClear: () =>
-                ref.read(addPostControllerProvider.notifier).setImage(null),
-          ),
-          const SizedBox(height: 16),
+          // Edit modunda resmi şimdilik değiştirmiyoruz
+          if (!isEdit)
+            ImagePickerField(
+              image: st.image,
+              onPick: () => _pick(ref),
+              onClear: () =>
+                  ref.read(addPostControllerProvider.notifier).setImage(null),
+            ),
+          if (!isEdit) const SizedBox(height: 16),
           DescriptionField(
             initial: st.description,
             onChanged: (v) =>
@@ -80,7 +122,8 @@ class AddPostPage extends ConsumerWidget {
             initial: st.location,
             onChanged: (v) =>
                 ref.read(addPostControllerProvider.notifier).setLocation(v),
-            onPlaceSelected: ({required String label, double? lat, double? lng}) {
+            onPlaceSelected:
+                ({required String label, double? lat, double? lng}) {
               ref.read(addPostControllerProvider.notifier).setLocation(label);
               ref.read(addPostControllerProvider.notifier).setLatLng(lat, lng);
             },

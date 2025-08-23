@@ -84,4 +84,31 @@ class UserService {
     if (data.isEmpty) return;
     await _db.collection('users').doc(uid).set(data, SetOptions(merge: true));
   }
+
+    /// username_lc üstünden prefix arama (canlı)
+  Stream<List<UserModel>> watchUsersByPrefix(String rawQ, {int limit = 20}) {
+    final q = (rawQ.trim().toLowerCase());
+    if (q.length < 2) {
+      // 1 harf ve altı için sonuç döndürme
+      return Stream.value(<UserModel>[]);
+    }
+
+    return _db
+        .collection('users')
+        .orderBy('username_lc')
+        .startAt([q])
+        .endAt([q + '\uf8ff'])
+        .limit(limit)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) {
+              final data = d.data();
+              return UserModel(
+                id: d.id,
+                username: (data['username'] as String?) ?? 'user_${d.id.substring(0,6)}',
+                photoUrl: data['photoUrl'] as String?,
+                bio: data['bio'] as String?,
+              );
+            }).toList());
+  }
+
 }

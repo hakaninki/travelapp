@@ -15,12 +15,16 @@ class LocationInfoRow extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.location_on_sharp, color: Colors.blueAccent),
-          Text(
-            location,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Text(
+              location,
+              softWrap: true,
+              maxLines: 2,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

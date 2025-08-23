@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_app/core/constants/app_collection.dart';
 import 'package:travel_app/features/post/application/add_post_state.dart';
 import 'package:travel_app/features/post/providers/post_provider.dart';
+import 'package:travel_app/core/models/post_model.dart';
 
 class AddPostController extends StateNotifier<AddPostState> {
   AddPostController(this._ref) : super(const AddPostState.initial());
@@ -19,9 +20,22 @@ class AddPostController extends StateNotifier<AddPostState> {
   void setLatLng(double? lat, double? lng) =>
       state = state.copyWith(lat: lat, lng: lng, error: '');
 
-  // ------- submit -------
+  /// ✅ dışarıdan formu sıfırlamak için
+  void reset() => state = const AddPostState.initial();
+
+  /// ✅ Edit modunda formu bir post ile doldur
+  void hydrateFrom(PostModel p) {
+    state = state.copyWith(
+      description: p.description,
+      location: p.location,
+      lat: p.lat,
+      lng: p.lng,
+      error: '',
+    );
+  }
+
+  // ------- submit (create) -------
   Future<bool> submit() async {
-    // temel doğrulamalar
     if (state.image == null) {
       state = state.copyWith(error: 'Please select an image');
       return false;
@@ -34,14 +48,12 @@ class AddPostController extends StateNotifier<AddPostState> {
     try {
       state = state.copyWith(isLoading: true, error: '');
 
-      // auth
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         state = state.copyWith(isLoading: false, error: 'Not signed in');
         return false;
       }
 
-      // username'i users/{uid} üzerinden al (fallback: displayName / email)
       String username = user.displayName ?? (user.email ?? 'user');
       try {
         final snap = await FirebaseFirestore.instance
@@ -54,7 +66,6 @@ class AddPostController extends StateNotifier<AddPostState> {
         }
       } catch (_) {/* ignore */ }
 
-      // service
       final postService = _ref.read(postServiceProvider);
 
       await postService.createPost(
@@ -63,15 +74,41 @@ class AddPostController extends StateNotifier<AddPostState> {
         username: username,
         description: state.description.trim(),
         location: state.location.trim(),
-        lat: state.lat,          // ✅ seçildiyse yazılır, yoksa null
+        lat: state.lat,
         lng: state.lng,
       );
 
-      // başarı: state reset
       state = const AddPostState.initial();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Failed to post: $e');
+      return false;
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// ------- submit (edit) -------
+  Future<bool> submitEdit(PostModel post) async {
+    if (state.description.trim().isEmpty) {
+      state = state.copyWith(error: 'Please enter a description');
+      return false;
+    }
+    try {
+      state = state.copyWith(isLoading: true, error: '');
+      final postService = _ref.read(postServiceProvider);
+
+      await postService.updatePost(
+        postId: post.id,
+        description: state.description.trim(),
+        location: state.location.trim(),
+        lat: state.lat,
+        lng: state.lng,
+      );
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Failed to update: $e');
       return false;
     } finally {
       state = state.copyWith(isLoading: false);

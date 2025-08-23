@@ -13,6 +13,9 @@ class PostModel {
   final double? lat;
   final double? lng;
 
+  /// ✅ güncelleme zamanı (opsiyonel)
+  final DateTime? updatedAt;
+
   PostModel({
     required this.id,
     required this.uid,
@@ -23,6 +26,7 @@ class PostModel {
     required this.createdAt,
     this.lat,
     this.lng,
+    this.updatedAt,
   });
 
   Map<String, dynamic> toMap() => {
@@ -35,19 +39,15 @@ class PostModel {
         'createdAt': createdAt,
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
+        if (updatedAt != null) 'updatedAt': updatedAt,
       };
 
   factory PostModel.fromMap(Map<String, dynamic> m) {
-    final raw = m['createdAt'];
-    DateTime created;
-    if (raw is Timestamp) {
-      created = raw.toDate();
-    } else if (raw is DateTime) {
-      created = raw;
-    } else if (raw is int) {
-      created = DateTime.fromMillisecondsSinceEpoch(raw);
-    } else {
-      created = DateTime.now();
+    DateTime _toDate(dynamic raw) {
+      if (raw is Timestamp) return raw.toDate();
+      if (raw is DateTime) return raw;
+      if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+      return DateTime.now();
     }
 
     return PostModel(
@@ -57,9 +57,10 @@ class PostModel {
       description: m['description'] as String,
       imageUrl: m['imageUrl'] as String,
       location: m['location'] as String,
-      createdAt: created,
+      createdAt: _toDate(m['createdAt']),
       lat: (m['lat'] is num) ? (m['lat'] as num).toDouble() : null,
       lng: (m['lng'] is num) ? (m['lng'] as num).toDouble() : null,
+      updatedAt: m['updatedAt'] != null ? _toDate(m['updatedAt']) : null,
     );
   }
 }
